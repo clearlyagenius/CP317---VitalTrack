@@ -6,7 +6,7 @@ import db from "@/lib/db";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { firstName, lastName, email, password, dateOfBirth } = body;
+    const { firstName, lastName, email, password, dateOfBirth, role } = body;
 
     if (!firstName || !lastName || !email || !password || !dateOfBirth) {
       return NextResponse.json(
@@ -33,17 +33,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Hash password, generate session token, and insert user
     const id = randomUUID();
     const passwordHash = bcrypt.hashSync(password, 10);
     const sessionToken = randomUUID();
 
     db.prepare(
-      `INSERT INTO users (id, firstName, lastName, email, passwordHash, dateOfBirth, sessionToken)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`
-    ).run(id, firstName, lastName, email, passwordHash, dateOfBirth, sessionToken);
+      `INSERT INTO users (id, firstName, lastName, email, passwordHash, dateOfBirth, sessionToken, role)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+    ).run(id, firstName, lastName, email, passwordHash, dateOfBirth, sessionToken, role || 'Patient');
 
-    // Set session cookie (auto-login after registration)
     const res = NextResponse.json({ success: true, userId: id }, { status: 201 });
 
     res.cookies.set("session", sessionToken, {
@@ -54,7 +52,6 @@ export async function POST(req: NextRequest) {
 
     return res;
   } catch (error) {
-    console.error("Registration error:", error);
     return NextResponse.json(
       { error: "Internal server error." },
       { status: 500 }

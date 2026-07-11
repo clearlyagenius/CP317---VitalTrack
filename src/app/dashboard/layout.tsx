@@ -15,7 +15,10 @@ export default async function DashboardLayout({
 
   return (
     <div className="dashboard-layout">
-      <Sidebar userName={`${user.firstName} ${user.lastName}`} />
+      <Sidebar 
+        userName={`${user.firstName} ${user.lastName}`}
+        userRole={user.role} 
+      />
       <main className="dashboard-content">{children}</main>
     </div>
   );

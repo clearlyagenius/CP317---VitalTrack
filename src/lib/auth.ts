@@ -6,6 +6,7 @@ interface SessionUser {
   firstName: string;
   lastName: string;
   email: string;
+  role?: string;
 }
 
 export async function getSessionUser(): Promise<SessionUser | null> {
@@ -15,7 +16,7 @@ export async function getSessionUser(): Promise<SessionUser | null> {
   if (!token) return null;
 
   const user = db
-    .prepare("SELECT id, firstName, lastName, email FROM users WHERE sessionToken = ?")
+    .prepare("SELECT id, firstName, lastName, email, role FROM users WHERE sessionToken = ?")
     .get(token) as SessionUser | undefined;
 
   return user || null;

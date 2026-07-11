@@ -63,4 +63,12 @@ try {
   // Column already exists
 }
 
+try {
+  db.exec(`ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'Patient'`);
+} catch {}
+
+try {
+  db.exec(`ALTER TABLE users ADD COLUMN availabilityStatus TEXT DEFAULT 'Offline'`);
+} catch {}
+
 export default db;

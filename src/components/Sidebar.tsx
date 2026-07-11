@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 
 interface SidebarProps {
   userName: string;
+  userRole?: string;
 }
 
 const navItems = [
@@ -12,10 +13,11 @@ const navItems = [
   { label: "Reports", href: "/dashboard/reports", section: "Health" },
   { label: "AI Analysis", href: "#", section: "Health" },
   { label: "Reminders", href: "/dashboard/reminders", section: "Tools" },
+  { label: "Availability", href: "/dashboard/availability", section: "Tools" },
   { label: "Settings", href: "#", section: "Tools" },
 ];
 
-export default function Sidebar({ userName }: SidebarProps) {
+export default function Sidebar({ userName, userRole = "Patient" }: SidebarProps) {
   const pathname = usePathname();
 
   // Group items by section
@@ -24,6 +26,8 @@ export default function Sidebar({ userName }: SidebarProps) {
     acc[item.section].push(item);
     return acc;
   }, {} as Record<string, typeof navItems>);
+
+const displayRole = userRole === "Doctor" ? "Healthcare Professional" : "Patient";
 
   return (
     <aside className="sidebar">
@@ -55,7 +59,7 @@ export default function Sidebar({ userName }: SidebarProps) {
         </div>
         <div>
           <div className="sidebar-user-name">{userName}</div>
-          <div className="sidebar-user-role">Patient</div>
+          <div className="sidebar-user-role">{displayRole}</div>
         </div>
       </div>
     </aside>

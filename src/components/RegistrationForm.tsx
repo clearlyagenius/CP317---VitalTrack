@@ -18,6 +18,7 @@ export default function RegistrationForm() {
       email: (form.elements.namedItem("email") as HTMLInputElement).value.trim(),
       password: (form.elements.namedItem("password") as HTMLInputElement).value,
       dateOfBirth: (form.elements.namedItem("dateOfBirth") as HTMLInputElement).value,
+      role: (form.elements.namedItem("role") as HTMLSelectElement).value,
     };
 
     try {
@@ -106,6 +107,21 @@ export default function RegistrationForm() {
           required
         />
       </div>
+
+      {/* Account Type */}
+      <div style={{ marginTop: 16 }}>
+       <label htmlFor="role">Account Type</label>
+       <select 
+         id="role" 
+         name="role" 
+         defaultValue="Patient" 
+         style={{ width: "100%", padding: "0.5rem", borderRadius: "0.375rem", border: "1px solid #d1d5db" }} 
+         required
+       >
+         <option value="Patient">Patient</option>
+         <option value="Doctor">Healthcare Professional</option>
+      </select>
+     </div>
 
       {/* Submit */}
       <button
