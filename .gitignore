@@ -47,3 +47,6 @@ next-env.d.ts
 
 # uploads
 /uploads
+
+# allow the env template (real keys stay in .env.local)
+!.env.example

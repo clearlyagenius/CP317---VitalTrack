@@ -10,7 +10,7 @@ interface SidebarProps {
 const navItems = [
   { label: "Dashboard", href: "/dashboard", section: "Overview" },
   { label: "Reports", href: "/dashboard/reports", section: "Health" },
-  { label: "AI Analysis", href: "#", section: "Health" },
+  { label: "AI Analysis", href: "/dashboard/analysis", section: "Health" },
   { label: "Reminders", href: "/dashboard/reminders", section: "Tools" },
   { label: "Settings", href: "#", section: "Tools" },
 ];
