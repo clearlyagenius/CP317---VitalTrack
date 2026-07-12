@@ -1,12 +1,15 @@
 "use client";
 
 import { useState, useEffect, useRef, type DragEvent } from "react";
+import AnalysisPanel, { type AnalysisResult } from "./AnalysisPanel";
 
 interface Report {
   id: string;
   fileName: string;
   fileSize: number;
   createdAt: string;
+  analysisStatus: "pending" | "analyzed" | "failed";
+  analysisSummary: string | null;
 }
 
 export default function ReportUpload() {
@@ -14,6 +17,10 @@ export default function ReportUpload() {
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  // REP-3 state: which reports are being analyzed / expanded, cached results
+  const [analyzingIds, setAnalyzingIds] = useState<Set<string>>(new Set());
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [analyses, setAnalyses] = useState<Record<string, AnalysisResult>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Load existing reports on mount
@@ -33,6 +40,66 @@ export default function ReportUpload() {
     }
   }
 
+  // REP-3: run Gemini analysis on a report and cache the result
+  async function analyzeReport(reportId: string) {
+    setAnalyzingIds((prev) => new Set(prev).add(reportId));
+    setMessage(null);
+
+    try {
+      const res = await fetch(`/api/reports/${reportId}/analyze`, { method: "POST" });
+      const result = await res.json();
+
+      if (res.ok) {
+        setAnalyses((prev) => ({
+          ...prev,
+          [reportId]: { status: "analyzed", summary: result.summary, markers: result.markers },
+        }));
+        setExpandedId(reportId);
+        const flagged = result.flaggedCount;
+        setMessage({
+          type: "success",
+          text:
+            flagged > 0
+              ? `Analysis complete — ${flagged} marker${flagged === 1 ? "" : "s"} outside the normal range.`
+              : "Analysis complete — all markers within normal range.",
+        });
+      } else {
+        setMessage({ type: "error", text: result.error || "Analysis failed." });
+      }
+    } catch {
+      setMessage({ type: "error", text: "Network error during analysis. Please try again." });
+    } finally {
+      setAnalyzingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(reportId);
+        return next;
+      });
+      fetchReports(); // refresh status badges
+    }
+  }
+
+  // Load stored analysis results when a report row is expanded
+  async function toggleExpand(report: Report) {
+    if (expandedId === report.id) {
+      setExpandedId(null);
+      return;
+    }
+    if (report.analysisStatus !== "analyzed") return;
+
+    if (!analyses[report.id]) {
+      try {
+        const res = await fetch(`/api/reports/${report.id}/analyze`);
+        if (res.ok) {
+          const data = await res.json();
+          setAnalyses((prev) => ({ ...prev, [report.id]: data }));
+        }
+      } catch {
+        return;
+      }
+    }
+    setExpandedId(report.id);
+  }
+
   async function uploadFile(file: File) {
     setUploading(true);
     setMessage(null);
@@ -49,8 +116,9 @@ export default function ReportUpload() {
       const result = await res.json();
 
       if (res.ok) {
-        setMessage({ type: "success", text: `"${file.name}" uploaded successfully!` });
-        fetchReports(); // Refresh the list
+        setMessage({ type: "success", text: `"${file.name}" uploaded — analyzing...` });
+        await fetchReports();
+        analyzeReport(result.reportId); // REP-3: auto-analyze right after upload
       } else {
         setMessage({ type: "error", text: result.error || "Upload failed." });
       }
@@ -86,6 +154,13 @@ export default function ReportUpload() {
       month: "short",
       day: "numeric",
     });
+  }
+
+  function statusBadge(report: Report) {
+    if (analyzingIds.has(report.id)) return <span className="report-badge badge-analyzing">Analyzing...</span>;
+    if (report.analysisStatus === "analyzed") return <span className="report-badge">Analyzed</span>;
+    if (report.analysisStatus === "failed") return <span className="report-badge badge-failed">Analysis failed</span>;
+    return <span className="report-badge badge-pending">Uploaded</span>;
   }
 
   return (
@@ -125,17 +200,44 @@ export default function ReportUpload() {
       {reports.length > 0 && (
         <div className="report-list">
           <h2 style={{ marginBottom: 16 }}>Uploaded Reports</h2>
-          {reports.map((report) => (
-            <div key={report.id} className="report-item">
-              <div className="report-info">
-                <span className="report-name">{report.fileName}</span>
-                <span className="report-meta">
-                  {formatFileSize(report.fileSize)} · {formatDate(report.createdAt)}
-                </span>
+          {reports.map((report) => {
+            const analysis = analyses[report.id];
+            const isExpanded = expandedId === report.id && analysis;
+
+            return (
+              <div key={report.id} className="report-card">
+                <div
+                  className="report-item"
+                  onClick={() => toggleExpand(report)}
+                  style={{ cursor: report.analysisStatus === "analyzed" ? "pointer" : "default" }}
+                >
+                  <div className="report-info">
+                    <span className="report-name">{report.fileName}</span>
+                    <span className="report-meta">
+                      {formatFileSize(report.fileSize)} · {formatDate(report.createdAt)}
+                    </span>
+                  </div>
+                  <div className="report-actions">
+                    {statusBadge(report)}
+                    <button
+                      type="button"
+                      className="analyze-btn"
+                      disabled={analyzingIds.has(report.id)}
+                      onClick={(e) => {
+                        e.stopPropagation(); // don't toggle the expand panel
+                        analyzeReport(report.id);
+                      }}
+                    >
+                      {report.analysisStatus === "analyzed" ? "Re-analyze" : "Analyze"}
+                    </button>
+                  </div>
+                </div>
+
+                {/* REP-3: analysis results panel */}
+                {isExpanded && <AnalysisPanel analysis={analysis} />}
               </div>
-              <span className="report-badge">Uploaded</span>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

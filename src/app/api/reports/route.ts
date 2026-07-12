@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
   }
 
   const reports = db
-    .prepare("SELECT id, fileName, fileSize, createdAt FROM reports WHERE userId = ? ORDER BY createdAt DESC")
+    .prepare("SELECT id, fileName, fileSize, createdAt, analysisStatus, analysisSummary FROM reports WHERE userId = ? ORDER BY createdAt DESC")
     .all(userId);
 
   return NextResponse.json({ reports });

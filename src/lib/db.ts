@@ -41,6 +41,46 @@ db.exec(`
   )
 `);
 
+// REP-3: track analysis state + AI summary on each report
+try {
+  db.exec(`ALTER TABLE reports ADD COLUMN analysisStatus TEXT NOT NULL DEFAULT 'pending'`);
+} catch {
+  // Column already exists
+}
+try {
+  db.exec(`ALTER TABLE reports ADD COLUMN analysisSummary TEXT`);
+} catch {
+  // Column already exists
+}
+
+// REP-3: structured markers extracted from each report.
+// One row per marker (e.g. Glucose, LDL). UI-2 reads this table to build
+// trend graphs and AI-1 reads the flagged rows to generate recommendations.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS report_markers (
+    id         TEXT PRIMARY KEY,
+    reportId   TEXT NOT NULL,
+    userId     TEXT NOT NULL,
+    name       TEXT NOT NULL,
+    value      REAL NOT NULL,
+    unit       TEXT NOT NULL,
+    refLow     REAL,
+    refHigh    REAL,
+    flag       TEXT NOT NULL DEFAULT 'normal',
+    explanation TEXT,
+    testedAt   TEXT,
+    createdAt  TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY (reportId) REFERENCES reports(id),
+    FOREIGN KEY (userId) REFERENCES users(id)
+  )
+`);
+
+try {
+  db.exec(`ALTER TABLE report_markers ADD COLUMN explanation TEXT`);
+} catch {
+  // Column already exists
+}
+
 // Create reminders table (shared by REM-1 medication + REM-2 health activity)
 db.exec(`
   CREATE TABLE IF NOT EXISTS reminders (
