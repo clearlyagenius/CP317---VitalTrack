@@ -97,6 +97,18 @@ db.exec(`
   )
 `);
 
+// AI Chat — conversation history per user
+db.exec(`
+  CREATE TABLE IF NOT EXISTS chat_messages (
+    id        TEXT PRIMARY KEY,
+    userId    TEXT NOT NULL,
+    role      TEXT NOT NULL,        -- 'user' | 'assistant'
+    content   TEXT NOT NULL,
+    createdAt TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY (userId) REFERENCES users(id)
+  )
+`);
+
 try {
   db.exec(`ALTER TABLE reminders ADD COLUMN day TEXT DEFAULT 'Every Day'`);
 } catch {
