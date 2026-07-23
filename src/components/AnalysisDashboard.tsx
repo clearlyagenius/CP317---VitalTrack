@@ -25,6 +25,7 @@ interface FlaggedMarker extends Marker {
 export default function AnalysisDashboard() {
   const [reports, setReports] = useState<Report[]>([]);
   const [flagged, setFlagged] = useState<FlaggedMarker[]>([]);
+  const [recommendations, setRecommendations] = useState<{category: string, text: string}[]>([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [analyzingIds, setAnalyzingIds] = useState<Set<string>>(new Set());
@@ -33,9 +34,10 @@ export default function AnalysisDashboard() {
 
   async function refresh() {
     try {
-      const [reportsRes, flaggedRes] = await Promise.all([
+      const [reportsRes, flaggedRes, coachRes] = await Promise.all([
         fetch("/api/reports"),
         fetch("/api/markers?flagged=true"),
+        fetch("/api/coach"),
       ]);
       if (reportsRes.ok) {
         const data = await reportsRes.json();
@@ -44,6 +46,10 @@ export default function AnalysisDashboard() {
       if (flaggedRes.ok) {
         const data = await flaggedRes.json();
         setFlagged(data.markers);
+      }
+      if (coachRes.ok) {
+        const data = await coachRes.json();
+        setRecommendations(data.recommendations || []);
       }
     } catch {
       // silently fail on load
@@ -179,6 +185,24 @@ export default function AnalysisDashboard() {
           </div>
         )}
       </div>
+
+      {/* AI Coach Recommendations */}
+      {flagged.length > 0 && recommendations.length > 0 && (
+        <div className="coach-recommendations" style={{ marginTop: 32, marginBottom: 32 }}>
+          <h2 style={{ marginBottom: 4 }}>AI Coach Recommendations</h2>
+          <p className="flagged-overview-sub" style={{ marginBottom: 16 }}>
+            Personalized non-medical advice based on your flagged markers.
+          </p>
+          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+            {recommendations.map((rec, i) => (
+              <div key={i} style={{ background: "var(--gray-100)", padding: "16px", borderRadius: "8px" }}>
+                <h3 style={{ fontSize: "1.1rem", marginBottom: "8px", color: "var(--gray-900)" }}>{rec.category}</h3>
+                <p style={{ color: "var(--gray-800)", lineHeight: "1.5" }}>{rec.text}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* All reports with their analyses */}
       <div className="report-list">

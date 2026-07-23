@@ -54,8 +54,6 @@ try {
 }
 
 // REP-3: structured markers extracted from each report.
-// One row per marker (e.g. Glucose, LDL). UI-2 reads this table to build
-// trend graphs and AI-1 reads the flagged rows to generate recommendations.
 db.exec(`
   CREATE TABLE IF NOT EXISTS report_markers (
     id         TEXT PRIMARY KEY,
@@ -81,6 +79,18 @@ try {
   // Column already exists
 }
 
+// Create report_metrics table for parsed biomarker data (Dashboard)
+db.exec(`
+  CREATE TABLE IF NOT EXISTS report_metrics (
+    id         TEXT PRIMARY KEY,
+    reportId   TEXT NOT NULL,
+    metricName TEXT NOT NULL,
+    value      REAL NOT NULL,
+    unit       TEXT NOT NULL,
+    createdAt  TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY (reportId) REFERENCES reports(id)
+  )
+`);
 // Create reminders table (shared by REM-1 medication + REM-2 health activity)
 db.exec(`
   CREATE TABLE IF NOT EXISTS reminders (

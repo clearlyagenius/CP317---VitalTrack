@@ -147,3 +147,80 @@ export async function extractMarkersFromReport(
       : [],
   };
 }
+
+export interface CoachRecommendation {
+  category: "Diet" | "Exercise" | "Lifestyle";
+  text: string;
+}
+
+export async function generateCoachRecommendations(flaggedMarkers: any[]): Promise<CoachRecommendation[]> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey || apiKey === "your-gemini-api-key-here") {
+    throw new Error(
+      "GEMINI_API_KEY is not set. Add it to .env.local in the project root (see .env.example)."
+    );
+  }
+
+  if (flaggedMarkers.length === 0) {
+    return [];
+  }
+
+  const prompt = `You are an AI Health Coach. The user has the following flagged markers from their recent blood test:
+${flaggedMarkers.map(m => `- ${m.name}: ${m.value} ${m.unit} (Flag: ${m.flag})`).join("\\n")}
+
+Provide at least 3 personalized health recommendations to help them improve these markers.
+Scope your recommendations to diet, exercise, and lifestyle changes ONLY. Do NOT prescribe medication or give medical diagnoses.
+Label your advice clearly as non-medical advice.
+
+Output JSON in the following format:
+{
+  "recommendations": [
+    { "category": "Diet" | "Exercise" | "Lifestyle", "text": "Recommendation text..." }
+  ]
+}`;
+
+  const schema = {
+    type: "OBJECT",
+    properties: {
+      recommendations: {
+        type: "ARRAY",
+        items: {
+          type: "OBJECT",
+          properties: {
+            category: { type: "STRING", enum: ["Diet", "Exercise", "Lifestyle"] },
+            text: { type: "STRING" }
+          },
+          required: ["category", "text"]
+        }
+      }
+    },
+    required: ["recommendations"]
+  };
+
+  const res = await fetch(GEMINI_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-goog-api-key": apiKey,
+    },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: {
+        temperature: 0.7,
+        responseMimeType: "application/json",
+        responseSchema: schema,
+      },
+    }),
+  });
+
+  if (!res.ok) {
+    throw new Error(`Gemini API request failed (HTTP ${res.status}).`);
+  }
+
+  const data = await res.json();
+  const text = data?.candidates?.[0]?.content?.parts?.filter((p: any) => !p.thought)?.at(-1)?.text;
+  if (!text) return [];
+
+  const parsed = JSON.parse(text);
+  return parsed.recommendations || [];
+}
