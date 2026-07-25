@@ -2,13 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import db from "@/lib/db";
 import { callGeminiChat } from "@/lib/geminiChat";
-
-function getUserIdFromSession(req: NextRequest): string | null {
-  const token = req.cookies.get("session")?.value;
-  if (!token) return null;
-  const user = db.prepare("SELECT id FROM users WHERE sessionToken = ?").get(token) as { id: string } | undefined;
-  return user?.id || null;
-}
+import { getUserIdFromSession } from "@/lib/auth";
 
 function buildSystemPrompt(userName: string, reportSummary: string, markerSummary: string, reminderSummary: string) {
   return `You are VitalTrack's AI health assistant, talking with ${userName}.
@@ -74,7 +68,7 @@ export async function POST(req: NextRequest) {
     const reportSummary = reports.length
       ? reports
           .map((r) =>
-            r.analysisStatus === "done" && r.analysisSummary
+            r.analysisStatus === "analyzed" && r.analysisSummary
               ? `Report "${r.fileName}" (${r.createdAt}): ${r.analysisSummary}`
               : `Report "${r.fileName}" (${r.createdAt}): ${r.analysisStatus}.`
           )
