@@ -1,20 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { writeFile, mkdir } from "fs/promises";
+import { getUserIdFromSession } from "@/lib/auth";
 import path from "path";
 import db from "@/lib/db";
-
-// Helper to get userId from session cookie
-function getUserIdFromSession(req: NextRequest): string | null {
-  const token = req.cookies.get("session")?.value;
-  if (!token) return null;
-
-  const user = db
-    .prepare("SELECT id FROM users WHERE sessionToken = ?")
-    .get(token) as { id: string } | undefined;
-
-  return user?.id || null;
-}
 
 // GET — list reports for the logged-in user
 export async function GET(req: NextRequest) {
