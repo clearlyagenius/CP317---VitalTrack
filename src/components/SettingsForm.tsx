@@ -31,15 +31,15 @@ export default function SettingsForm() {
       .then((res) => res.json())
       .then((data) => {
         if (data.error) {
-          setMessage(data.error);
-          setStatus("error");
-        } else {
-          setProfile(data);
-          setFirstName(data.firstName);
-          setLastName(data.lastName);
-          setEmail(data.email);
-          setDateOfBirth(data.dateOfBirth);
-        }
+        setMessage(data.error);
+        setStatus("error");
+      } else {
+        setProfile(data);
+        setFirstName(data.firstName);
+        setLastName(data.lastName);
+        setEmail(data.email);
+        setDateOfBirth(data.dateOfBirth);
+      }
       })
       .catch(() => {
         setMessage("Failed to load profile.");
@@ -50,10 +50,10 @@ export default function SettingsForm() {
 
   const hasChanges = profile
     ? firstName !== profile.firstName ||
-      lastName !== profile.lastName ||
-      email !== profile.email ||
-      dateOfBirth !== profile.dateOfBirth ||
-      newPassword.length > 0
+    lastName !== profile.lastName ||
+    email !== profile.email ||
+    dateOfBirth !== profile.dateOfBirth ||
+    newPassword.length > 0
     : false;
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {

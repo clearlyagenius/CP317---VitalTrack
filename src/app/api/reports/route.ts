@@ -34,6 +34,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No file provided." }, { status: 400 });
     }
 
+    // Enforce 5MB file size limit
+    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json(
+        { error: "File size exceeds the 5MB limit. Please upload a smaller file." },
+        { status: 413 }
+      );
+    }
+
     // Save file to uploads directory
     const uploadsDir = path.join(process.cwd(), "uploads");
     await mkdir(uploadsDir, { recursive: true });

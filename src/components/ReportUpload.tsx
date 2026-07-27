@@ -12,6 +12,8 @@ interface Report {
   analysisSummary: string | null;
 }
 
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+
 export default function ReportUpload() {
   const [reports, setReports] = useState<Report[]>([]);
   const [uploading, setUploading] = useState(false);
@@ -104,6 +106,13 @@ export default function ReportUpload() {
     setUploading(true);
     setMessage(null);
 
+    // Client-side file size check
+    if (file.size > MAX_FILE_SIZE) {
+      setMessage({ type: "error", text: "File size exceeds the 5MB limit. Please upload a smaller file." });
+      setUploading(false);
+      return;
+    }
+
     const formData = new FormData();
     formData.append("file", file);
 
@@ -194,6 +203,7 @@ export default function ReportUpload() {
         <button type="button" className="upload-btn" disabled={uploading}>
           Choose File
         </button>
+        <p style={{ fontSize: "0.8rem", color: "var(--gray-400)", marginTop: 12 }}>Max file size: 5MB</p>
       </div>
 
       {/* Report list */}
