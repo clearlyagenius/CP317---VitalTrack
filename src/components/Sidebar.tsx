@@ -14,7 +14,7 @@ const navItems = [
   { label: "AI Analysis", href: "/dashboard/analysis", section: "Health" },
   { label: "AI Chat", href: "#chat", section: "Health" },
   { label: "Reminders", href: "/dashboard/reminders", section: "Tools" },
-  { label: "Settings", href: "#", section: "Tools" },
+  { label: "Settings", href: "/dashboard/settings", section: "Tools" },
 ];
 
 export default function Sidebar({ userName, onChatClick }: SidebarProps) {

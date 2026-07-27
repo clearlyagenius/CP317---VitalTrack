@@ -37,19 +37,22 @@ export async function POST(req: NextRequest) {
     const id = randomUUID();
     const passwordHash = bcrypt.hashSync(password, 10);
     const sessionToken = randomUUID();
+    const sessionExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
 
     db.prepare(
-      `INSERT INTO users (id, firstName, lastName, email, passwordHash, dateOfBirth, sessionToken)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`
-    ).run(id, firstName, lastName, email, passwordHash, dateOfBirth, sessionToken);
+      `INSERT INTO users (id, firstName, lastName, email, passwordHash, dateOfBirth, sessionToken, sessionExpiresAt)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+    ).run(id, firstName, lastName, email, passwordHash, dateOfBirth, sessionToken, sessionExpiresAt);
 
     // Set session cookie (auto-login after registration)
     const res = NextResponse.json({ success: true, userId: id }, { status: 201 });
 
     res.cookies.set("session", sessionToken, {
       httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
       path: "/",
-      maxAge: 60 * 60 * 24 * 7,
+      maxAge: 60 * 60 * 24, // 24 hours
     });
 
     return res;

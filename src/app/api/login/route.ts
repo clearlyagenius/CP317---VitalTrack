@@ -43,9 +43,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Generate session token and store it
+    // Generate session token and store it with a 24-hour expiry
     const sessionToken = randomUUID();
-    db.prepare("UPDATE users SET sessionToken = ? WHERE id = ?").run(sessionToken, user.id);
+    const sessionExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+    db.prepare("UPDATE users SET sessionToken = ?, sessionExpiresAt = ? WHERE id = ?").run(sessionToken, sessionExpiresAt, user.id);
 
     // Set session cookie
     const res = NextResponse.json({
@@ -56,8 +57,10 @@ export async function POST(req: NextRequest) {
 
     res.cookies.set("session", sessionToken, {
       httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
       path: "/",
-      maxAge: 60 * 60 * 24 * 7, // 7 days
+      maxAge: 60 * 60 * 24, // 24 hours
     });
 
     return res;

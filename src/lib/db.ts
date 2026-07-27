@@ -17,6 +17,7 @@ db.exec(`
     passwordHash TEXT NOT NULL,
     dateOfBirth  TEXT NOT NULL,
     sessionToken TEXT,
+    sessionExpiresAt TEXT,
     createdAt    TEXT NOT NULL DEFAULT (datetime('now'))
   )
 `);
@@ -24,6 +25,13 @@ db.exec(`
 // Add sessionToken column if upgrading from old schema
 try {
   db.exec(`ALTER TABLE users ADD COLUMN sessionToken TEXT`);
+} catch {
+  // Column already exists — ignore
+}
+
+// Add sessionExpiresAt column if upgrading from old schema
+try {
+  db.exec(`ALTER TABLE users ADD COLUMN sessionExpiresAt TEXT`);
 } catch {
   // Column already exists — ignore
 }
