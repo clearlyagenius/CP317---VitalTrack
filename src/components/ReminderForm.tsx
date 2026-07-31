@@ -16,7 +16,7 @@ interface Reminder {
 const CATEGORIES = ["Medicine", "Appointment", "Blood Test", "Exercise", "Other"];
 const FREQUENCIES = ["Daily", "Weekly", "One-time"];
 const DAYS = ["Every Day", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday", "Specific Date"];
-const NOTIFY_OPTIONS = ["Push + email", "Push", "Email"];
+const NOTIFY_OPTIONS = ["Email", "None"];
 
 export default function ReminderForm() {
   const [reminders, setReminders] = useState<Reminder[]>([]);
@@ -28,9 +28,10 @@ export default function ReminderForm() {
   const [ampm, setAmpm] = useState("AM");
   const [category, setCategory] = useState("Medicine");
   const [frequency, setFrequency] = useState("Daily");
-  const [notifyVia, setNotifyVia] = useState("Push + email");
+  const [notifyVia, setNotifyVia] = useState("None");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [message, setMessage] = useState("");
+  const [notifyingIds, setNotifyingIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetchReminders();
@@ -48,10 +49,59 @@ export default function ReminderForm() {
     }
   }
 
+  async function handleNotify(reminderId: string) {
+    setNotifyingIds((prev) => new Set(prev).add(reminderId));
+    setMessage("");
+    setStatus("idle");
+
+    try {
+      const res = await fetch("/api/reminders/notify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reminderId }),
+      });
+      const result = await res.json();
+
+      if (res.ok) {
+        setStatus("success");
+        setMessage(result.message || "Reminder email sent!");
+      } else {
+        setStatus("error");
+        setMessage(result.error || "Failed to send notification.");
+      }
+    } catch {
+      setStatus("error");
+      setMessage("Network error. Please try again.");
+    } finally {
+      setNotifyingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(reminderId);
+        return next;
+      });
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setStatus("loading");
     setMessage("");
+
+    // If email notifications selected, validate the user has a valid email
+    if (notifyVia === "Email") {
+      try {
+        const res = await fetch("/api/settings");
+        const profile = await res.json();
+        if (!profile.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(profile.email)) {
+          setStatus("error");
+          setMessage("Your account email is invalid. Please update it in Settings before enabling email notifications.");
+          return;
+        }
+      } catch {
+        setStatus("error");
+        setMessage("Could not verify your email. Please try again.");
+        return;
+      }
+    }
 
     let h = parseInt(hour, 10);
     if (ampm === "PM" && h !== 12) h += 12;
@@ -84,7 +134,7 @@ export default function ReminderForm() {
         setAmpm("AM");
         setCategory("Medicine");
         setFrequency("Daily");
-        setNotifyVia("Push + email");
+        setNotifyVia("None");
         fetchReminders();
       } else {
         const result = await res.json();
@@ -297,12 +347,22 @@ export default function ReminderForm() {
             <div key={r.id} className="reminder-item">
               <div className="reminder-info">
                 <span className="reminder-name">{r.name}</span>
-                <span className="reminder-meta">{r.category} · {r.day !== "Every Day" ? formatDayDisplay(r.day) + " " : ""}{r.time}</span>
+                <span className="reminder-meta">{r.category} · {r.day !== "Every Day" ? formatDayDisplay(r.day) + " " : ""}{r.time} · {r.notifyVia}</span>
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <span className={`reminder-badge ${getTimeLabel(r) === "Completed" ? "reminder-badge-done" : ""}`}>
                   {getTimeLabel(r)}
                 </span>
+                {r.notifyVia === "Email" && (
+                  <button
+                    type="button"
+                    className="analyze-btn"
+                    disabled={notifyingIds.has(r.id)}
+                    onClick={() => handleNotify(r.id)}
+                  >
+                    {notifyingIds.has(r.id) ? "Sending..." : "Notify"}
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => handleDelete(r.id)}
@@ -325,10 +385,20 @@ export default function ReminderForm() {
             <div key={r.id} className="reminder-item">
               <div className="reminder-info">
                 <span className="reminder-name">{r.name}</span>
-                <span className="reminder-meta">{r.category} · {r.day !== "Every Day" ? formatDayDisplay(r.day) + " " : ""}{r.time}</span>
+                <span className="reminder-meta">{r.category} · {r.day !== "Every Day" ? formatDayDisplay(r.day) + " " : ""}{r.time} · {r.notifyVia}</span>
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <span className="reminder-badge">{getTimeLabel(r)}</span>
+                {r.notifyVia === "Email" && (
+                  <button
+                    type="button"
+                    className="analyze-btn"
+                    disabled={notifyingIds.has(r.id)}
+                    onClick={() => handleNotify(r.id)}
+                  >
+                    {notifyingIds.has(r.id) ? "Sending..." : "Notify"}
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => handleDelete(r.id)}
