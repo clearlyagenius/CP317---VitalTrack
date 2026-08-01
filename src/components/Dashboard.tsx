@@ -164,8 +164,8 @@ export default function Dashboard({ reports, firstName }: DashboardProps) {
             </div>
           ))
         ) : (
-          metrics.map((m) => (
-            <div key={m.metricName} className="metric-card">
+          metrics.map((m, i) => (
+            <div key={`${m.metricName}-${i}`} className="metric-card">
               <span className="metric-label">{m.metricName}</span>
               <span className="metric-value">
                 {m.value} <span className="metric-unit">{m.unit}</span>
@@ -285,14 +285,8 @@ function TrendChart({ data, color, metricName }: TrendChartProps) {
 
     ctx.beginPath();
     ctx.moveTo(points[0].x, PAD_TOP + chartH);
-    // Smooth curve through points using quadratic bezier
-    ctx.lineTo(points[0].x, points[0].y);
-    for (let i = 1; i < points.length; i++) {
-      const cpX = (points[i - 1].x + points[i].x) / 2;
-      ctx.quadraticCurveTo(points[i - 1].x, points[i - 1].y, cpX, (points[i - 1].y + points[i].y) / 2);
-      if (i === points.length - 1) {
-        ctx.quadraticCurveTo(cpX, (points[i - 1].y + points[i].y) / 2, points[i].x, points[i].y);
-      }
+    for (const pt of points) {
+      ctx.lineTo(pt.x, pt.y);
     }
     ctx.lineTo(points[points.length - 1].x, PAD_TOP + chartH);
     ctx.closePath();
@@ -303,11 +297,7 @@ function TrendChart({ data, color, metricName }: TrendChartProps) {
     ctx.beginPath();
     ctx.moveTo(points[0].x, points[0].y);
     for (let i = 1; i < points.length; i++) {
-      const cpX = (points[i - 1].x + points[i].x) / 2;
-      ctx.quadraticCurveTo(points[i - 1].x, points[i - 1].y, cpX, (points[i - 1].y + points[i].y) / 2);
-      if (i === points.length - 1) {
-        ctx.quadraticCurveTo(cpX, (points[i - 1].y + points[i].y) / 2, points[i].x, points[i].y);
-      }
+      ctx.lineTo(points[i].x, points[i].y);
     }
     ctx.strokeStyle = color;
     ctx.lineWidth = 2.5;

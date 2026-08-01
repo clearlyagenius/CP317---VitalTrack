@@ -2,17 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { readFile } from "fs/promises";
 import db from "@/lib/db";
-
-function getUserIdFromSession(req: NextRequest): string | null {
-  const token = req.cookies.get("session")?.value;
-  if (!token) return null;
-
-  const user = db
-    .prepare("SELECT id FROM users WHERE sessionToken = ?")
-    .get(token) as { id: string } | undefined;
-
-  return user?.id || null;
-}
+import { getUserIdFromSession } from "@/lib/auth";
 
 const METRIC_DEFS = [
   { name: "Glucose", unit: "mmol/L", normalMin: 4.0, normalMax: 5.6 },

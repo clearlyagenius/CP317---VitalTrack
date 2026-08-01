@@ -1,0 +1,12 @@
+Blood Test Report
+Patient: Bob Smith
+Lab: City Health Diagnostics
+Date: January 15, 2026
+
+Test Results:
+Glucose: 5.2 mmol/L/Users/tahmeed_t/Desktop/Blood_Report_Jun2026.txt
+Haemoglobin: 14.1 g/dL
+LDL Cholesterol: 92 mg/dL
+Vitamin D: 35 ng/mL
+
+Notes: All values within normal range. Continue current diet and exercise regimen.

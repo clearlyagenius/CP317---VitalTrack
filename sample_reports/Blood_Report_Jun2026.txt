@@ -1,0 +1,12 @@
+Blood Test Report
+Patient: Bob Smith
+Lab: City Health Diagnostics
+Date: June 10, 2026
+
+Test Results:
+Glucose: 6.4 mmol/L
+Haemoglobin: 12.8 g/dL
+LDL Cholesterol: 142 mg/dL
+Vitamin D: 18 ng/mL
+
+Notes: Glucose high, approaching prediabetic range. LDL cholesterol significantly elevated. Vitamin D deficient. Recommend immediate lifestyle changes and possible medication.

@@ -1,0 +1,12 @@
+Blood Test Report
+Patient: Bob Smith
+Lab: City Health Diagnostics
+Date: March 28, 2026
+
+Test Results:
+Glucose: 5.8 mmol/L
+Haemoglobin: 13.2 g/dL
+LDL Cholesterol: 118 mg/dL
+Vitamin D: 28 ng/mL
+
+Notes: Glucose slightly elevated. LDL above optimal. Recommend dietary adjustments and follow-up in 3 months.

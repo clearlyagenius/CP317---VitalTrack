@@ -1,16 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import db from "@/lib/db";
-
-function getUserIdFromSession(req: NextRequest): string | null {
-  const token = req.cookies.get("session")?.value;
-  if (!token) return null;
-
-  const user = db
-    .prepare("SELECT id FROM users WHERE sessionToken = ?")
-    .get(token) as { id: string } | undefined;
-
-  return user?.id || null;
-}
+import { getUserIdFromSession } from "@/lib/auth";
 
 interface TrendRow {
   reportId: string;
